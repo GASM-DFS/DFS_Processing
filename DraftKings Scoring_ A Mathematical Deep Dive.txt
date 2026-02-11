@@ -1,0 +1,547 @@
+﻿Analytical Framework for the Mathematical Reconstruction of Daily Fantasy Sports Scoring Systems
+The mathematical architecture of the DraftKings scoring ecosystem represents a complex integration of linear event weighting, positional scalars, and conditional milestone bonuses designed to quantify athletic performance into a singular competitive currency. This system operates across a diverse range of sports, each requiring a customized weighting schema to account for different statistical frequencies and the relative importance of specific play types. To recreate these scores with high fidelity, an analyst must understand the interplay between raw data ingestion from official providers and the subsequent application of league-specific rulesets, temporal "Game Set" boundaries, and positional multipliers.1 The following analysis decomposes these mechanics sport by sport, providing the logical and mathematical foundations necessary to build an automated scoring engine that mirrors the platform’s internal calculations.
+Foundational Architecture of the Scoring Engine
+At its core, the platform utilizes an additive linear model to determine the total fantasy points (  ) for an individual athlete. This model is defined as the sum of all    recorded statistical events (  ), each multiplied by a specific coefficient (  ), which is then supplemented by discrete milestone bonuses (  ) and finally scaled by a positional multiplier (  ), typically seen in Showdown or Captain modes.4
+  
+
+This calculation is applied within the context of a "Game Set," which is the temporal and structural container for any given contest. A Game Set consists of a predetermined group of games, and its rules regarding start times, lock status, and scoring periods are fixed upon its creation.1 The "lock" mechanism is a critical temporal variable; athletes typically become ineligible for substitution at the scheduled start time of their team's game, at which point the algorithm begins tracking their performance statistics in real-time.1
+Structural Variable
+	Definition
+	Mathematical Impact
+	Game Set
+	A collection of games used for a specific contest series.
+	Determines the pool of eligible statistics (  ).
+	Lock Time
+	The scheduled start time of an individual game or Game Set.
+	Fixes the athlete pool and prevents late-entry bias.
+	Salary Cap
+	The budgetary constraint (typically   ) for lineup construction.
+	Normalizes the potential score based on historical performance.
+	Scoring Period
+	The window from the first game's start to the final box score validation.
+	Defines the period of record for statistical accumulation.
+	The scoring engine relies on high-resolution data feeds from third-party providers such as STATS LLC, Sportradar, and Opta.3 These providers transmit play-by-play events that the DraftKings engine then parses according to the sport-specific rulesets detailed in the following sections.
+Mathematical Reconstruction of American Football Scoring
+American football scoring (NFL, CFL, UFL, and CFB) is categorized by a high volume of yardage-based linear points and a step-function for team defensive performance. Recreating these scores requires tracking yardage at a precision of 0.01 yards, though points are typically awarded for every yard gained at specific fractional rates.1
+Offensive Scoring Coefficients and Precision Rates
+The offensive model is built on raw production metrics. For the purposes of algorithm construction, the weights are treated as constants applied to the total yardage and event counts.1
+Offensive Statistic
+	Point Coefficient (w)
+	Precision Detail
+	Passing Yardage
+	  
+
+	Calculated as    per 25 yards.
+	Rushing Yardage
+	  
+
+	Calculated as    per 10 yards.
+	Receiving Yardage
+	  
+
+	Calculated as    per 10 yards.
+	Reception
+	  
+
+	Fixed value per catch (PPR).
+	Passing Touchdown
+	  
+
+	Fixed reward for the passer.
+	Rushing/Receiving TD
+	  
+
+	Standard scoring event value.
+	Fumble Recovery TD
+	  
+
+	Applied to any offensive fumble recovery.
+	2-Point Conversion
+	  
+
+	Points awarded to passer, rusher, or receiver.
+	Interception
+	  
+
+	Penalty for turnovers.
+	Fumble Lost
+	  
+
+	Penalty for turnovers.
+	Milestone bonuses (  ) are discrete increments added to the cumulative total once a threshold is reached. In standard NFL Classic contests, a    point bonus is awarded for    passing yards,    rushing yards, and    receiving yards. These bonuses are not cumulative for the same category but are independent across different categories.1
+For specialized formats like the "QB Gunslinger," the milestone bonuses become tiered and cumulative. The mathematical progression for passing yardage bonuses in these contests follows a step-function 9:
+*    if   
+*    (  ) if   
+*    (  ) if   
+Team Defense and Special Teams (DST) Algorithm
+The Team Defense/Special Teams (DST) scoring is a hybrid of cumulative events and a discrete penalty/reward function based on "Points Allowed" (PA). The recreation of this score requires a filtered count of points surrendered while the DST unit is specifically on the field.1
+  
+
+The Points Allowed function    is a critical component that can result in negative score contributions. It is defined by the following mapping 1:
+Points Allowed Range
+	Points Awarded
+	  
+
+	  
+
+	  
+
+	  
+
+	  
+
+	  
+
+	  
+
+	  
+
+	  
+
+	  
+
+	  
+
+	  
+
+	  
+
+	  
+
+	An essential logic rule for recreating DST scores is that "Points Allowed" excludes points generated by the opposing team's defense or special teams when the offensive unit is on the field (e.g., a "pick-six" or a fumble returned for a touchdown by the opponent).1 However, extra points and field goals are always included in the Points Allowed calculation.1
+Variational Mechanics in CFL, UFL, and College Football
+The Canadian Football League (CFL) introduces the "Rouge," which awards    point to the DST if scored. Furthermore, CFL offensive players receive a higher rate for return yardage:    point per 20 punt/kickoff/FG return yards (   Pts/Yard).12
+The UFL scoring model features a 1, 2, and 3-point conversion system after touchdowns. These are scored at face value (  ,   , and    points) for the individual offensive players involved.11 In UFL overtime, all attempts are mathematically treated as 2-point conversions.11 Another unique UFL variable is the "double forward pass" play; the engine only credits the statistics from the second forward pass outcome for passing and receiving points.11
+College Football (CFB) scoring mirrors the NFL Classic model but mandates that all overtime scoring plays be included in the fantasy total for all participating players.1
+Quantitative Analysis of Basketball Scoring Models
+Basketball scoring for NBA, WNBA, and EuroLeague is highly standardized, emphasizing high-frequency actions and multi-categorical proficiency. The model prioritizes versatility through specific discrete bonuses for achieving statistical plateaus.6
+Core NBA/WNBA Statistical Weighting
+The basic linear model for basketball statistics is consistent across major leagues. These coefficients are applied regardless of position unless the player is in a multiplier slot.6
+Statistic
+	Fantasy Points
+	Mathematical Rationale
+	Points Scored
+	  
+
+	Baseline offensive contribution.
+	Made 3-Point Shot
+	  
+
+	Incentive for distance shooting efficiency.
+	Rebound
+	  
+
+	High-frequency defensive/offensive stat.
+	Assist
+	  
+
+	Rewards playmaking over pure rebounding.
+	Steal
+	  
+
+	Rewards high-impact defensive turnovers.
+	Block
+	  
+
+	Rewards high-impact defensive events.
+	Turnover
+	  
+
+	Penalty for loss of possession.
+	The "Made 3-Point Shot" bonus is an additional credit. Therefore, a successful 3-point attempt yields a total of    points (3 for the points and 0.5 for the bonus).15
+Multi-Categorical Proficiency Bonuses
+The system utilizes a "Double-Double" (DD) and "Triple-Double" (TD) bonus structure to reward all-around performance. These bonuses are based on five primary categories: Points, Rebounds, Assists, Blocks, and Steals.6
+   * Double-Double: Awarded if a player reaches    in any two categories (   points).
+   * Triple-Double: Awarded if a player reaches    in any three categories (   points).
+These bonuses are mutually exclusive. If a player achieves a Triple-Double, the    point bonus replaces the    point Double-Double bonus.6 The engine must evaluate the category counts after every event to determine which bonus is active, with a maximum of one such bonus per player per game.15
+Single-Stat and EuroLeague Variations
+In specialized "Single Stat" contests, the lineup typically consists of 3 players, and the scoring is purely the sum total of one specific category (e.g., total Points or total Rebounds).20 EuroLeague scoring follows the same weighting as the NBA but operates under its own Game Set and lock timing rules.1
+Major League Baseball (MLB) Scoring Frameworks
+MLB scoring is bifurcated into two distinct tracks: Hitter production and Pitcher efficiency. The mathematical relationship between these tracks is designed to create a balanced value proposition between high-scoring offensive outings and dominant pitching performances.22
+Hitter Event Weighting and Stacking Mechanics
+The hitter model rewards total base production and run-creation events. Unlike traditional "Total Bases" metrics, each hit type is assigned a discrete value.23
+Hitter Event
+	Points (Classic)
+	Points (Showdown/Tiers)
+	Single
+	  
+
+	  
+
+	Double
+	  
+
+	  
+
+	Triple
+	  
+
+	  
+
+	Home Run
+	  
+
+	  
+
+	RBI
+	  
+
+	  
+
+	Run Scored
+	  
+
+	  
+
+	Base on Balls (Walk)
+	  
+
+	  
+
+	Hit By Pitch
+	  
+
+	  
+
+	Stolen Base
+	  
+
+	  
+
+	Sacrifice Fly/Hit
+	  
+
+	N/A in Classic
+	Showdown and specific "Hitter Bonus" formats introduce situational rewards like the "Grand Slam" (   points) and the "1st Hit" bonus (   points).25 A significant rule for reconstruction is the "Home Run/Stolen Base Combo," which awards    points if a hitter achieves both in a single game.25
+Pitcher Efficiency and Duration Metrics
+Pitcher scoring is heavily influenced by duration and strikeouts. The primary unit of duration is the "Inning Pitched" (IP), which is mathematically treated as    points per "Out" (   per inning).23
+The coefficient for IP and Strikeouts (SO) varies significantly between Starting Pitchers (SP) and Relief Pitchers (RP) in certain formats to account for different usage patterns 23:
+Pitcher Category
+	IP Coefficient
+	SO Coefficient
+	Starting Pitcher (SP)
+	  
+
+	  
+
+	Relief Pitcher (RP)
+	  
+
+	  
+
+	Negative coefficients are applied to high-frequency failure events:
+      * Earned Run Allowed:   
+      * Hit Against:   
+      * Walk Against:   
+      * Hit Batsman:    23
+Pitchers also have a suite of discrete milestone bonuses 23:
+         * Win:   
+         * Complete Game (CG):   
+         * Complete Game Shutout (CGSO):   
+         * No-Hitter:   
+         *    Strikeout Bonus:   
+         *    Innings Pitched:   
+In MLB contests, hitting statistics for pitchers and pitching statistics for hitters are never counted, maintaining strict positional eligibility rules.23
+Hockey (NHL) and Soccer (SOC) Scoring Architectures
+Global field sports require a blend of raw scoring and defensive volume metrics. In these sports, the engine must distinguish between different types of defensive actions (e.g., saves vs. goals against) to create a consistent point floor.27
+NHL Skater and Goalie Logic
+NHL skaters are rewarded for goal participation and volume.27
+Skater Stat
+	Points (Classic)
+	Points (Showdown)
+	Goal
+	  
+
+	  
+
+	Assist
+	  
+
+	  
+
+	Shot on Goal
+	  
+
+	  
+
+	Blocked Shot
+	  
+
+	  
+
+	Short Handed Bonus
+	  
+
+	  
+
+	Hat Trick Bonus
+	  
+
+	  
+
+	  
+ Point Bonus
+	  
+
+	  
+
+	Goalie scoring is highly sensitive to workload and outcome.27
+            * Win:   
+            * Save:   
+            * Goal Against:   
+            * Shutout Bonus:    (Must complete entire game with zero goals allowed)
+            *    Save Bonus:   
+            * Overtime Loss:   .27
+A crucial note for recreating goalie scores is that shootout goals do not count as goals against, nor do they prevent a goalie from earning a Shutout Bonus.27
+Soccer Positional Weighting and the 60-Minute Rule
+Soccer is the only major sport where the points awarded for a goal or assist vary based on the player’s listed roster position.32
+Statistic
+	Goalkeeper (GK)
+	Defender (D)
+	Midfielder (M)
+	Forward (F)
+	Goal
+	  
+
+	  
+
+	  
+
+	  
+
+	Assist
+	  
+
+	  
+
+	  
+
+	  
+
+	Shot on Goal
+	  
+
+	  
+
+	  
+
+	  
+
+	Clean Sheet
+	  
+
+	  
+
+	  
+
+	  
+
+	Recreating soccer scores requires a "minutes played" tracker. The "Clean Sheet" and "Win" bonuses for Goalkeepers and Defenders are only awarded if the player competes for at least 60 minutes. Furthermore, for a win to be credited, the player's team must be leading at the time of their substitution if they are subbed off before the match ends.28
+Additional tactical stats include:
+               * Tackle Won:   
+               * Interception:    (Except GKs)
+               * Accurate Pass:   
+               * Penalty Kick Save:    for GKs.8
+Mixed Martial Arts (MMA) and Combat Sports
+MMA scoring (specifically UFC) is heavily weighted toward "Fight Conclusion Bonuses," creating high volatility based on the duration of the match.5
+Fight Conclusion Matrix
+The points awarded for a win decrease as the fight progresses into later rounds, mathematically simulating the relative dominance of an early finish.34
+Win Scenario
+	Fantasy Points
+	1st Round Win
+	  
+
+	2nd Round Win
+	  
+
+	3rd Round Win
+	  
+
+	4th Round Win
+	  
+
+	5th Round Win
+	  
+
+	Decision Win
+	  
+
+	Quick Win (60s or less)
+	  
+
+	The "Quick Win Bonus" is cumulative with the 1st Round Win, meaning an early knockout can yield    points from the win alone.34
+Cumulative Action Coefficients
+The engine tracks individual strikes and grapple maneuvers with high precision.5
+                  * Significant Strike:    total (Calculated as    for the Strike plus    for the Significant Strike designation).5
+                  * Takedown:   
+                  * Reversal/Sweep:   
+                  * Knockdown:   
+                  * Control Time:    points per second (   points per minute).34
+Precision and Performance: Golf and Tennis Scoring
+Individual performance sports utilize different mathematical normalization techniques to account for variable match lengths and course conditions.38
+Golf: Hole-by-Hole and Tournament Finish Dynamics
+Golf scoring combines absolute performance relative to par with relative performance on the tournament leaderboard.38
+Score Type
+	Point Value
+	Double Eagle or Better
+	  
+
+	Eagle
+	  
+
+	Birdie
+	  
+
+	Par
+	  
+
+	Bogey
+	  
+
+	Double Bogey or Worse
+	  
+
+	Finishing bonuses range from    points for 1st place to    point for 50th place. These are non-averaged, meaning tied players both receive the full point value for their rank.38 For Match Play golf, a "Holes Not Played" bonus of    points per unplayed hole is awarded to the winning golfer, ensuring they are not penalized for winning a match quickly.41
+Tennis: Best-of-3 vs. Best-of-5 Normalization
+Tennis scoring coefficients are adjusted based on the total potential sets in a match to maintain parity between standard tournaments and Men's Grand Slams.39
+Statistic
+	Best-of-3 Points
+	Best-of-5 Points
+	Match Played
+	  
+
+	  
+
+	Game Won
+	  
+
+	  
+
+	Game Lost
+	  
+
+	  
+
+	Set Won
+	  
+
+	  
+
+	Set Lost
+	  
+
+	  
+
+	Ace
+	  
+
+	  
+
+	Double Fault
+	  
+
+	  
+
+	Break
+	  
+
+	  
+
+	"Win by Retirement" bonuses are mathematically tiered. A player winning via retirement in Set 1 of a Best-of-3 match receives    total points (sum of Match Win    and Retirement Bonus   ).39
+Velocity and Position in NASCAR Scoring
+The NASCAR scoring model is unique due to the "Place Differential" variable, which creates a dynamic score that can change significantly during official post-race validation.44
+The Place Differential Calculation
+The core of the NASCAR algorithm is the differential between the qualifying position and the official finishing position.44
+  
+
+Each position gained is worth    point, while each position lost is    point. If a driver’s starting position changes after qualifying (e.g., due to a car change), the original qualifying position is still used for the calculation.44
+Race Metrics
+                     * Finishing Position: 1st (  ), 2nd (  ), 3rd (  ), decreasing to 40th (  ).44
+                     * Fastest Lap:    per lap.
+                     * Laps Led:    per lap.44
+Esports: Tactical Events and Series Normalization
+Esports scoring (League of Legends and CS:GO) must account for the high variance in game time and series length.21
+League of Legends (LoL) GNP Model
+To recreate LoL scores, the engine must apply "Games Not Played" (GNP) bonuses when a Best-of series ends before the maximum number of games is reached.21
+                        * Winning Players (GNP+):    points per unplayed game.
+                        * Winning Teams (GNP+):    points per unplayed game.
+Standard weights include    per kill,    per assist, and    per death. Teams receive points for objectives: Turrets (  ), Dragons (  ), Barons (  ), and a "Win in Under 30 Minutes" bonus of   .21
+CS:GO Scenario Scoring
+CS:GO logic emphasizes round-by-round events such as "Entry Kills" (  ) and "Clutches" (   to    depending on the    ratio).46
+                           * Ace Bonus:    points (Awarded for 5 kills in a single round, replacing the Quad Kill bonus).
+                           * Rounds Not Played (RNP):    per round not played, ensuring dominant teams reach a score floor even in short maps.46
+The Operational Engine: Step-by-Step Data Validation
+Recreating DraftKings scores is not merely a task of applying weights; it requires following the platform’s rigorous operational validation timeline. The following steps outline the literal progression from live play to finalized score.2
+Step 1: Schema Selection and Multiplier Identification
+The engine must first identify the contest type (Classic, Showdown, or Tiers) and the sport-specific schema. If a player is designated as a "Captain" or "MVP," a scalar    is applied to all statistics.4
+Step 2: Live Statistics Ingestion
+Data is pulled from the designated third-party API. The algorithm must aggregate cumulative stats (yards, kills, points) and discrete events (touchdowns, wins). During this phase, scores are considered "unofficial" and are used only for live leaderboard entertainment.2
+Step 3: Threshold and Bonus Verification
+After the conclusion of an event, the engine checks for milestone triggers. In football, this involves checking if the yardage    or   .1 In basketball, it requires a check for the Double-Double/Triple-Double logic.15 In esports and golf match play, the GNP bonuses must be calculated based on the difference between scheduled and played games.21
+Step 4: Rule-Specific Filtering
+The engine applies "exclusionary" logic rules:
+                              * Football: Verify if Points Allowed were surrendered by the DST or the offense.1
+                              * Soccer: Confirm the 60-minute participation threshold for clean sheets and wins.28
+                              * Baseball: Filter out hitting stats for pitchers.23
+                              * Tennis: Apply walkover or retirement scalars.39
+Step 5: Stat Correction Window and Finalization
+The platform allows for a period of official verification where live stats are reconciled with final league box scores.2
+                              * NFL Validation: The scoring period typically concludes at 11:59 pm ET on the Wednesday following the Game Set.9
+                              * Stat Corrections: If an official league issues a correction (e.g., reassigning a sack) after games have ended but before the contest is "Completed," the engine updates the score. However, once the contest status moves to "Completed," subsequent league corrections are disregarded.2
+Step 6: Tie-Breaking and Prize Distribution
+In instances of identical scores, the engine executes a split-payout protocol. The prizes for the tied ranks are summed and divided equally among the tied entrants.51 For specific formats like Best Ball, a secondary metric (e.g., highest individual week score) is used as a functional tie-breaker before splitting prizes.51
+Conclusions on the Convergence of Athletics and Mathematics
+The mathematical reconstruction of DraftKings scores reveals a system designed to maximize the statistical resolution of athletic performance. By employing high-precision rates—such as    points per passing yard or    points per second of MMA control time—the platform ensures that nearly every meaningful action on the field contributes to a player's fantasy output. For the technical practitioner, the primary challenge in recreation lies in the temporal handling of data: identifying the correct Game Set, applying positional scalars at the point of ingestion, and respecting the hard deadlines of the official validation window. This quantitative framework, underpinned by partnerships with global data giants, creates a stable and transparent environment where the nuance of live sport is successfully translated into a rigorous numerical competition.
+Works cited
+                              1. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/1
+                              2. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules
+                              3. Fantasy Sports Contest Rules & Scoring - Overview - DraftKings Service Portal, accessed January 28, 2026, https://support.draftkings.com/dk/en-us/fantasy-sports-contest-rules--scoring-overview?id=kb_article_view&sysparm_article=KB0010560
+                              4. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/1/226
+                              5. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/9/234
+                              6. NBA Classic - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/4
+                              7. NBA Tiers Non Late Swap - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/4/65
+                              8. Soccer Tiers - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/8/38
+                              9. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/1/99
+                              10. NFL Tiers - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/1/50
+                              11. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/28
+                              12. CFL Classic - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/14
+                              13. CFL Showdown - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/14/91
+                              14. CFB Classic - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/5
+                              15. NBA Best Ball - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/4/170
+                              16. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/4/37
+                              17. DraftKings Scoring: Scoring Tutorial for All Sports on DraftKings - Lineups, accessed January 28, 2026, https://www.lineups.com/betting/draftkings-strategy/scoring/
+                              18. NBA In-Game Showdown Q4 - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/4/113
+                              19. NBA Series - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/4/137
+                              20. NBA & WNBA Single Stat - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/4/335
+                              21. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/11
+                              22. Understanding the Scoring System for DraftKings MLB Baseball - - Win Daily Sports, accessed January 28, 2026, https://windailysports.com/scoring-for-draftkings-mlb-baseball-fantasy/
+                              23. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/2/83
+                              24. MLB Tiers - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/2/44
+                              25. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/2/59
+                              26. MLB Series - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/2/160
+                              27. NHL Showdown Captain Mode - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/3/127
+                              28. Classic Soccer - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/8/122
+                              29. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/3/4
+                              30. NHL Series - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/3/136
+                              31. NHL Classic - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/3/125
+                              32. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/8/82
+                              33. Soccer Showdown - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/8/123
+                              34. Reignmakers UFC Classic - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/9/242
+                              35. MMA Classic - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/9
+                              36. Pick6 Rules and Scoring UFC, accessed January 28, 2026, https://pick6.draftkings.com/pick6-rules-and-scoring-ufc
+                              37. DFS 101: Reviewing DraftKings MMA Scoring Changes - RotoWire, accessed January 28, 2026, https://www.rotowire.com/mma/article/dfs-101-reviewing-draftkings-mma-scoring-changes-54707
+                              38. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/7/307
+                              39. Single Match Tennis - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/16
+                              40. Classic Golf - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/7
+                              41. Match Play Golf - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/7/78
+                              42. Tennis Snake - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/16/372
+                              43. DraftKings Daily Fantasy Tennis Launched - Betting USA, accessed January 28, 2026, https://www.bettingusa.com/daily-fantasy-tennis-launched-at-draftkings-ahead-of-wimbledon/
+                              44. NASCAR Classic - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/10
+                              45. NASCAR Snake - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/10/376
+                              46. Counter Strike Showdown - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/19/151
+                              47. Counter Strike Classic - Rules - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/19
+                              48. How does DraftKings treat late stat changes and live scoring delays?, accessed January 28, 2026, https://support.draftkings.com/dk/en-us/how-does-draftkings-treat-late-stat-changes-and-live-scoring-delays?id=kb_article_view&sysparm_article=KB0010820
+                              49. Rules & Scoring - DraftKings, accessed January 28, 2026, https://www.draftkings.com/help/rules/1/58
+                              50. Pick6 Rules And Scoring NFL Season Long, accessed January 28, 2026, https://pick6.draftkings.com/pick6-rules-and-scoring-nfl-season-long
+                              51. What happens when I tie with others in a Fantasy Sports contest? - DraftKings Service Portal, accessed January 28, 2026, https://support.draftkings.com/dk/en-us/what-happens-when-i-tie-with-others-in-a-fantasy-sports-contest?id=kb_article_view&sysparm_article=KB0010633
+                              52. Betting Pools for Sports | DraftKings Sportsbook, accessed January 28, 2026, https://sportsbook.draftkings.com/pools/pool-details/07c6fcee-4eb8-4888-948a-e0c657a6e789?lobby

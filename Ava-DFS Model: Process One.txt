@@ -1,0 +1,80 @@
+Step one is where we ingest the DraftKings player data and the NBA injury information. Each DraftKings contest has its own set of player and contest IDs, the user will provide the necessary contest information. 
+
+CONTEST DATA GUIDE:
+	PG: Point Guard
+	SG: Shooting Guard
+	SF: Small Forward
+	PF: Power Forward
+	C: Center
+	G: Guard (Can be either PG or SG)
+	F: Forward (Can be either SF or PF)
+	UTIL: This can be any position
+
+PROVIDED DATA:
+	The user will provide data that consist of the 'Name + ID', 'Roster 	 
+	Position', 'Salary', 'TeamAbbrev', and 'Game Info'.
+
+Name + ID: Below are the independent explanation of both the 'Name' and 'ID' portions of this column data.
+	Name Portion:
+		This is the player name as it appears in the DraftKings platform. This is not required for ingestion into the DK platform, however it is needed so the user can understand who the player is.
+	
+	ID Portion:
+		This is the contest and player specific ID. If we create lineups and the 
+		contest ID is incorrect then the lineup will be rejected. This will get 
+		concatenated with the 'Name' column to become 'Name + ID', which is the 
+		data that we will use to identify which player is being rostered.
+
+Roster Position: 
+	This is the list of roster positions that DraftKings permits that 	
+	player to fill. If the lineups have players in a position that the data does 	
+	not show as an eligible position then the lineup will be rejected.
+	EXAMPLE: PF/C/F/UTIL
+
+Salary:
+	Each lineup has to be constructed with a total player salary that is <= 	
+	$50,000. Each player is given a salary, meaning that this is the amount the 
+	amount of the total salary that this player cost.
+	EXAMPLE: 9500
+
+TeamAbbrev:
+	This is the abbreviated value of the team name the player plays for.
+	EXAMPLE: DAL
+
+Game Info: 
+	This is the information specific to the game itself. From this we will learn 		
+	the date, team, who is home, who is away, and the time the game tips off.
+	EXAMPLE: MIN@DAL 01/28/2026 08:30PM ET
+
+
+
+Here is the exact format the user will provide this information:
+
+Name + ID    ||    Name    ||    ID    ||    Roster Position    ||    Salary    ||    Game Info    ||    TeamAbbrev
+--------------------------------------------------------------------------------------------------------------------------------------
+Anthony Davis (41764147)    ||    Anthony Davis    ||    41764147    ||    PF/C/F/UTIL    ||    9500    ||    MIN@DAL 01/28/2026 08:30PM ET    ||    DAL
+--------------------------------------------------------------------------------------------------------------------------------------
+Anthony Edwards (41764222)    ||    Anthony Edwards    ||    41764222    ||    SG/G/UTIL    ||    9300    ||    MIN@DAL 01/28/2026 08:30PM ET    ||    MIN
+--------------------------------------------------------------------------------------------------------------------------------------
+Julius Randle (41764153)    ||    Julius Randle    ||    41764153    ||    PF/F/UTIL    ||    8600    ||    MIN@DAL 01/28/2026 08:30PM ET    ||    MIN
+--------------------------------------------------------------------------------------------------------------------------------------
+Ja Morant (41764197)    ||    Ja Morant    ||    41764197    ||    PG/G/UTIL    ||    8400    ||    CHA@MEM 01/28/2026 08:00PM ET    ||    MEM
+--------------------------------------------------------------------------------------------------------------------------------------
+Cooper Flagg (41764340)    ||    Cooper Flagg    ||    41764340    ||    PG/SF/F/G/UTIL    ||    8000    ||    MIN@DAL 01/28/2026 08:30PM ET    ||    DAL
+--------------------------------------------------------------------------------------------------------------------------------------
+LaMelo Ball (41764286)    ||    LaMelo Ball    ||    41764286    ||    PG/G/UTIL    ||    7600    ||    CHA@MEM 01/28/2026 08:00PM ET    ||    CHA
+--------------------------------------------------------------------------------------------------------------------------------------
+Jaren Jackson Jr. (41764204)    ||    Jaren Jackson Jr.    ||    41764204    ||    C/UTIL    ||    7400    ||    CHA@MEM 01/28/2026 08:00PM ET    ||    MEM
+--------------------------------------------------------------------------------------------------------------------------------------
+Brandon Miller (41764319)    ||    Brandon Miller    ||    41764319    ||    SF/F/UTIL    ||    7300    ||    CHA@MEM 01/28/2026 08:00PM ET    ||    CHA
+
+
+
+From this data I want a player list created that has a checkbox in col 1 with a header named "Active", every check box should be checked when first generated. Each checked box indicates that the player is active for the game. In col 2 there is a header named "Player / Team". The col2 is populated with the following: CONCAT(NAME," - ", TeamAbbrev). 
+
+The user will update the list to exclude any player they choose, whether by injury or not. This is the list of player we will use in all analysis or simulations. If the team has a typical starter excluded then the assumption is that the next in the depth chart will fill in and the advanced stats, such as usage, leverage, etc. needs to account for this change. The simulation need to account for missing players especially when the removal of a player impact the teams ability to do something as well as before. 
+
+This is a stand alone process, meaning that the user runs this once and no matter how many times they re-run the other processes this player list will be unaffected. This means that the other processes will consult the player list before proceeding to assure that any and all changes are accounted for. 
+
+Create a helper function that generates a starter checklist. In this function the user is provided a way to select the team they want to review. Based on the user's selection, the selected teams projected starters are listed by position, each with a check box tha is checked by default. Also this should have a third column where the user can add text information regarding an individual player that AI (ALWAYS gemini 2.5-pro) will read and make adjustments to the list based on the user input.
+
+

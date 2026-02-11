@@ -1,0 +1,1 @@
+This is a process for inspecting and updating the BigQuery tables. This needs to start off by running the NBA APIs the feed the tables and add any missing data into the database. Next, calculate the custom columns and verify that the data available to the model is fully in place.
