@@ -1,61 +1,54 @@
 import os
 import pandas as pd
 import gspread
-import warnings
 from google.oauth2.service_account import Credentials
 
-# Suppress Deprecation Warnings for a cleaner terminal
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-# --- Configuration ---
+# --- SETTINGS ---
 FOLDER_PATH = "/home/ava-dfs/Downloads/Ava_Folder"
 SHEET_ID = "1JR06-bcrgJmr7QZjoqSaY8jCilGLDH9O5E6oNwohsWk"
-KEY_FILE = 'service_account.json'
 PROTECTED_TAB = 'Main Data'
-
+KEY_FILE = os.path.join(FOLDER_PATH, 'service_account.json')
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 
 def run_sync():
-    print("🚀 Scanning for Slate CSVs...")
+    print(f"🚀 [TERMINAL RUN] Scanning: {FOLDER_PATH}")
+    
+    if not os.path.exists(KEY_FILE):
+        print(f"❌ Missing: {KEY_FILE}")
+        return
+
+    # Find the CSVs
     files = [f for f in os.listdir(FOLDER_PATH) if "Slate" in f and f.endswith('.csv')]
     
     if not files:
-        print("❌ No 'Slate' files found.")
+        print("⚠️ No Slate CSVs found to process.")
         return
 
-    try:
-        creds = Credentials.from_service_account_file(os.path.join(FOLDER_PATH, KEY_FILE), scopes=SCOPES)
-        client = gspread.authorize(creds)
-        spreadsheet = client.open_by_key(SHEET_ID)
-    except Exception as e:
-        print(f"❌ Auth/Connection Error: {e}")
-        return
+    # Auth
+    creds = Credentials.from_service_account_file(KEY_FILE, scopes=SCOPES)
+    client = gspread.authorize(creds)
+    ss = client.open_by_key(SHEET_ID)
 
-    # Clean up old contest tabs
-    for sheet in spreadsheet.worksheets():
+    # Clean existing tabs (except Protected)
+    for sheet in ss.worksheets():
         if sheet.title != PROTECTED_TAB:
-            spreadsheet.del_worksheet(sheet)
-            print(f"🗑️ Removed old tab: {sheet.title}")
+            ss.del_worksheet(sheet)
+            print(f"🗑️ Deleted tab: {sheet.title}")
 
-    # Process each context
+    # Process and Upload
     for file_name in files:
-        full_path = os.path.join(FOLDER_PATH, file_name)
+        path = os.path.join(FOLDER_PATH, file_name)
         tab_name = file_name.replace('.csv', '')
-
         try:
-            # Slicing J8:R (Columns 9-17, skipping first 7 rows)
-            df = pd.read_csv(full_path, skiprows=7, usecols=range(9, 18), header=None)
+            # Slicing J8:R (Columns 9 to 18, skipping first 7 rows)
+            df = pd.read_csv(path, skiprows=7, usecols=range(9, 18), header=None)
+            df = df.dropna(subset=[df.columns[0]]) # Drop rows where Col J is empty
             
-            # Filter: WHERE NOT J IS NULL (J is index 0 in this slice)
-            df_filtered = df.dropna(subset=[df.columns[0]])
-
-            # Create tab and upload with modern syntax
-            new_sheet = spreadsheet.add_worksheet(title=tab_name, rows="1000", cols="10")
-            new_sheet.update(values=df_filtered.values.tolist(), range_name='A1')
-            print(f"✅ Success: {tab_name} uploaded.")
-
+            new_sheet = ss.add_worksheet(title=tab_name, rows="1000", cols="10")
+            new_sheet.update(values=df.values.tolist(), range_name='A1')
+            print(f"✅ Uploaded: {tab_name}")
         except Exception as e:
-            print(f"⚠️ Error on {file_name}: {e}")
+            print(f"⚠️ Failed {file_name}: {e}")
 
 if __name__ == "__main__":
     run_sync()
